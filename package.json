@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@coders-tm/vue-number-format": "^3.34.1",
+    "axios": "^1.7.7",
     "element-plus": "^2.8.7",
+    "js-sha256": "^0.11.0",
     "vue": "^3.5.12",
+    "vue-router": "^4.4.5",
     "vue-the-mask": "^0.11.1"
   },
   "devDependencies": {

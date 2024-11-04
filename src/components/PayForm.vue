@@ -18,7 +18,6 @@
       </ElFormItem>
     </div>
     <ElFormItem label="Сумма перевода" prop="amount">
-      {{ form.amount }}
       <ElInput
         maxlength="15"
         v-model.lazy="form.amount"
@@ -34,7 +33,7 @@
     <ElFormItem label="Сообщение получателю" prop="messageToRecipient">
       <ElInput v-model="form.messageToRecipient" clearable />
     </ElFormItem>
-    <div class="flex justify-start items-center gap-4 py-5">
+    <div class="flex justify-start items-center gap-4 pb-4">
       <ElButton type="primary" class="w-[131px]" @click="submitForm(formRef)">Перевести</ElButton>
       <ElButton type="primary" plain class="!ml-0 w-[129px]">Вернуться</ElButton>
     </div>
@@ -46,24 +45,25 @@ import { ref } from 'vue'
 import { ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus'
 import { directive as vNumberFormat } from '@coders-tm/vue-number-format'
+import router from '../router';
+import { RequestBody } from '../types/request-show/request-body';
+import { sha256 } from 'js-sha256';
+import { PayForm } from '../types/pay-form/pay-form';
 
-interface Form {
-  cardNumber: string
-  expirationDate: string
-  cvv: string
-  amount: number | null
-  senderName: string
-  messageToRecipient: string
-}
+const {initiatorName, duesTitle} = defineProps<{
+  initiatorName: string 
+  duesTitle: string
+}>()
 
 const formRef = ref<FormInstance>()
-const form = ref<Form>({
+const form = ref<PayForm>({
   cardNumber: '',
   expirationDate: '',
   cvv: '',
   amount: null,
   senderName: '',
   messageToRecipient: '',
+  transaction: '1',
 })
 
 const rules = ref<FormRules>({
@@ -112,7 +112,20 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   if (!isValid)
     return
 
-  console.log('valid')
+  const requestBody = <RequestBody>{
+    hash_sum: sha256(`${import.meta.env.VITE_API_KEY}${form.value.transaction}${(form.value.amount ?? 0) * 100}${import.meta.env.VITE_SECRET}`),
+    transaction: form.value.transaction,
+    amount: form.value.amount,
+    description: form.value.messageToRecipient,
+    api_key: `${import.meta.env.VITE_API_KEY}`,
+    email: 'ramazanfajzov@mail.ru',
+    custom_data: {
+      initiatorName,
+      duesTitle
+    },
+  }
+
+  router.push({ path: '/post', query: { requestBody: JSON.stringify(requestBody) }})
 }
 
 function algorithmLuhn (value: string) {
