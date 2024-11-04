@@ -6,24 +6,27 @@
     label-position="top"
     :rules="rules"
   >
-    <ElFormItem label="Номер карты" v-mask="'#### #### #### ####'" prop="cardNumber">
+    <ElFormItem label="Номер карты" v-mask="'#### #### #### ####'" max="19" prop="cardNumber">
       <ElInput v-model="form.cardNumber" clearable />
     </ElFormItem>
     <div class="flex gap-9 w-full">
-      <ElFormItem label="Срок действия" v-mask="'##/##'" prop="expirationDate">
+      <ElFormItem label="Срок действия" v-mask="'##/##'" max="5" prop="expirationDate">
         <ElInput v-model="form.expirationDate" placeholder="ММ/ГГ" clearable />
       </ElFormItem>
-      <ElFormItem label="CVV" v-mask="'###'" prop="cvv">
+      <ElFormItem label="CVV" v-mask="'###'" max="3" prop="cvv">
         <ElInput v-model="form.cvv" clearable/>
       </ElFormItem>
     </div>
     <ElFormItem label="Сумма перевода" prop="amount">
+      {{ form.amount }}
       <ElInput
-        v-model="form.amount"
-        :formatter="(value: string | number) => `${value} ₽`"
-        :parser="(value: string) => value.replace(/\s*₽/, '').trim()" 
-        clearable />
-        <!-- TODO:Очистка не корректно работает, убрать возможность ввода string -->
+        maxlength="15"
+        v-model.lazy="form.amount"
+        v-number-format="amountFormatOptions"
+        :formatter="(value: string) => value"
+        :parser="(value: string) => value.replace(amountFormatOptions.suffix, '')"
+        clearable
+      />
     </ElFormItem>
     <ElFormItem label="Ваше имя" prop="senderName">
       <ElInput v-model="form.senderName" clearable />
@@ -42,6 +45,7 @@
 import { ref } from 'vue'
 import { ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus'
+import { directive as vNumberFormat } from '@coders-tm/vue-number-format'
 
 interface Form {
   cardNumber: string
@@ -70,16 +74,24 @@ const rules = ref<FormRules>({
   senderName: [{ required: true, message: 'Введите имя', trigger: 'change' }],
 })
 
+const AMOUNT_CURRENCY = '₽'
+const amountFormatOptions = {
+  suffix: ` ${AMOUNT_CURRENCY}`,
+  nullValue: AMOUNT_CURRENCY,
+  separator: '',
+}
+
 function cardNumberValidator(rule: any, value: any, callback: any) {
   if (!value || value.length < 19) {
-    callback(new Error('Введите номер карты'))
-  } else {
-    callback()
+    return callback(new Error('Введите номер карты'))
   }
-}// TODO:Добавить в условие алгоритм Луна
+
+  const algorithmResult = algorithmLuhn(value)
+  algorithmResult ? callback() : callback(new Error('Неправильно введён номер карты'))
+}
 
 function amountValidator(rule: any, value: any, callback: any) {
-  if (!value) {
+  if (!value || isNaN(value)) {
     callback(new Error('Введите сумму'))
   } else if (value < 10) {
     callback(new Error('Не менее 10 руб.'))
@@ -101,6 +113,23 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     return
 
   console.log('valid')
+}
+
+function algorithmLuhn (value: string) {
+  const splittedCardNumber = (value.replace(/[\s]/g, '')).split('')
+  let summ = 0
+
+  splittedCardNumber.forEach((number, index) => {
+    if (index % 2) {
+      summ += +number
+    } else {
+      let step1 = +number * 2
+      let step2 = step1 > 9 ? step1 - 9 : step1
+      summ += step2
+    }
+  })
+
+  return summ % 10 ? false : true
 }
 </script>
 

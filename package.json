@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@coders-tm/vue-number-format": "^3.34.1",
     "element-plus": "^2.8.7",
     "vue": "^3.5.12",
     "vue-the-mask": "^0.11.1"
