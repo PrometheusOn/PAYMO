@@ -4,7 +4,7 @@ import { URL, fileURLToPath } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/PAYMO/',
+  base: '/paymo',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
