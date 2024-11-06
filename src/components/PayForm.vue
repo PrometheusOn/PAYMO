@@ -83,7 +83,7 @@ const amountFormatOptions = {
   separator: '',
 }
 
-function cardNumberValidator(value: any, callback: any) {
+function cardNumberValidator(_rule: any, value: any, callback: any) {
   if (!value || value.length < 19) {
     return callback(new Error('Введите номер карты'))
   }
@@ -92,7 +92,7 @@ function cardNumberValidator(value: any, callback: any) {
   algorithmResult ? callback() : callback(new Error('Неправильно введён номер карты'))
 }
 
-function amountValidator(value: any, callback: any) {
+function amountValidator(_rule: any, value: any, callback: any) {
   if (!value || isNaN(value)) {
     callback(new Error('Введите сумму'))
   } else if (value < 10) {
