@@ -31,7 +31,7 @@
       <ElInput v-model="form.senderName" clearable />
     </ElFormItem>
     <ElFormItem label="Сообщение получателю" prop="messageToRecipient">
-      <ElInput v-model="form.messageToRecipient" clearable />
+      <ElInput v-model="form.description" clearable />
     </ElFormItem>
     <div class="flex justify-start items-center gap-4 pb-4">
       <ElButton type="primary" class="w-[131px]" @click="submitForm(formRef)">Перевести</ElButton>
@@ -45,16 +45,18 @@ import { ref } from 'vue'
 import { ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus'
 import { directive as vNumberFormat } from '@coders-tm/vue-number-format'
-import router from '../router';
-import { RequestBody } from '../types/request-show/request-body';
-import { sha256 } from 'js-sha256';
+import { useRouter } from 'vue-router'
+
 import { PayForm } from '../types/pay-form/pay-form';
+import { useTransactionStore } from '../store/transactionStore';
 
 const {initiatorName, duesTitle} = defineProps<{
   initiatorName: string 
   duesTitle: string
 }>()
 
+const router = useRouter();
+const transactionStore = useTransactionStore()
 const formRef = ref<FormInstance>()
 const form = ref<PayForm>({
   cardNumber: '',
@@ -62,7 +64,7 @@ const form = ref<PayForm>({
   cvv: '',
   amount: null,
   senderName: '',
-  messageToRecipient: '',
+  description: '',
   transaction: '1',
 })
 
@@ -112,20 +114,15 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   if (!isValid)
     return
 
-  const requestBody = <RequestBody>{
-    hash_sum: sha256(`${import.meta.env.VITE_API_KEY}${form.value.transaction}${(form.value.amount ?? 0) * 100}${import.meta.env.VITE_SECRET}`),
+  transactionStore.assembleBody({
     transaction: form.value.transaction,
     amount: form.value.amount,
-    description: form.value.messageToRecipient,
-    api_key: `${import.meta.env.VITE_API_KEY}`,
-    email: 'ramazanfajzov@mail.ru',
-    custom_data: {
-      initiatorName,
-      duesTitle
-    },
-  }
+    description: form.value.description,
+    initiatorName,
+    duesTitle
+  })
 
-  router.push({ path: '/post', query: { requestBody: JSON.stringify(requestBody) }})
+  router.push({path: '/post'})
 }
 
 function algorithmLuhn (value: string) {

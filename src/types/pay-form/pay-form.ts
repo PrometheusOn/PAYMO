@@ -4,6 +4,6 @@ export interface PayForm {
   cvv: string
   amount: number | null
   senderName: string
-  messageToRecipient: string
+  description: string
   transaction: string
 }
