@@ -9,7 +9,7 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["node"],
+    "types": ["node", "./src/types"],
     "moduleResolution": "node",
     "module": "ESNext",
     "target": "ES2020",
