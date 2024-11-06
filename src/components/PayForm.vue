@@ -18,7 +18,6 @@
       </ElFormItem>
     </div>
     <ElFormItem label="Сумма перевода" prop="amount">
-      {{ form.amount }}
       <ElInput
         maxlength="15"
         v-model.lazy="form.amount"
@@ -32,9 +31,9 @@
       <ElInput v-model="form.senderName" clearable />
     </ElFormItem>
     <ElFormItem label="Сообщение получателю" prop="messageToRecipient">
-      <ElInput v-model="form.messageToRecipient" clearable />
+      <ElInput v-model="form.description" clearable />
     </ElFormItem>
-    <div class="flex justify-start items-center gap-4 py-5">
+    <div class="flex justify-start items-center gap-4 pb-4">
       <ElButton type="primary" class="w-[131px]" @click="submitForm(formRef)">Перевести</ElButton>
       <ElButton type="primary" plain class="!ml-0 w-[129px]">Вернуться</ElButton>
     </div>
@@ -46,24 +45,27 @@ import { ref } from 'vue'
 import { ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus'
 import { directive as vNumberFormat } from '@coders-tm/vue-number-format'
+import { useRouter } from 'vue-router'
 
-interface Form {
-  cardNumber: string
-  expirationDate: string
-  cvv: string
-  amount: number | null
-  senderName: string
-  messageToRecipient: string
-}
+import { PayForm } from '../types/pay-form/pay-form';
+import { useTransactionStore } from '../store/transactionStore';
 
+const {initiatorName, duesTitle} = defineProps<{
+  initiatorName: string 
+  duesTitle: string
+}>()
+
+const router = useRouter();
+const transactionStore = useTransactionStore()
 const formRef = ref<FormInstance>()
-const form = ref<Form>({
+const form = ref<PayForm>({
   cardNumber: '',
   expirationDate: '',
   cvv: '',
   amount: null,
   senderName: '',
-  messageToRecipient: '',
+  description: '',
+  transaction: '1',
 })
 
 const rules = ref<FormRules>({
@@ -112,7 +114,15 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   if (!isValid)
     return
 
-  console.log('valid')
+  transactionStore.assembleBody({
+    transaction: form.value.transaction,
+    amount: form.value.amount,
+    description: form.value.description,
+    initiatorName,
+    duesTitle
+  })
+
+  router.push({path: '/post'})
 }
 
 function algorithmLuhn (value: string) {
